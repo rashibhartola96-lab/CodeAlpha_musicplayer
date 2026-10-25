@@ -36,7 +36,7 @@
         }
 
         .song-info {
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
         .title {
@@ -48,6 +48,32 @@
         .artist {
             font-size: 14px;
             color: #a0a0b0;
+        }
+
+        /* Progress Bar Styling */
+        .progress-container {
+            background: #3e3e5c;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 15px 0;
+            height: 6px;
+            width: 100%;
+        }
+
+        .progress {
+            background: #00d2ff;
+            border-radius: 5px;
+            height: 100%;
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+
+        .time-container {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #a0a0b0;
+            margin-bottom: 15px;
         }
 
         .navigation {
@@ -75,7 +101,7 @@
 
         .playlist {
             text-align: left;
-            margin-top: 20px;
+            margin-top: 15px;
             max-height: 150px;
             overflow-y: auto;
             border-top: 1px solid #3e3e5c;
@@ -94,20 +120,6 @@
             background: #3e3e5c;
             color: #00d2ff;
         }
-
-        .links-section {
-            margin-top: 20px;
-            font-size: 14px;
-        }
-
-        .links-section a {
-            color: #00d2ff;
-            text-decoration: none;
-        }
-
-        .links-section a:hover {
-            text-decoration: underline;
-        }
     </style>
 </head>
 <body>
@@ -122,43 +134,42 @@
 
         <audio id="audio"></audio>
 
+        <!-- Progress Bar & Timer -->
+        <div class="progress-container" id="progress-container">
+            <div class="progress" id="progress"></div>
+        </div>
+        <div class="time-container">
+            <span id="current-time">0:00</span>
+            <span id="duration">0:00</span>
+        </div>
+
         <div class="navigation">
             <button id="prev">⏮</button>
             <button id="play">▶</button>
             <button id="next">⏭</button>
         </div>
 
-        <div class="playlist" id="playlist">
-            <!-- Playlist items will be dynamically generated here -->
-        </div>
-
-        <div class="links-section">
-            <a href="calculator.html">Go to Calculator 🧮</a>
-        </div>
+        <div class="playlist" id="playlist"></div>
     </div>
 
     <script>
-        // ==========================================
-        // 🎵 EDIT YOUR SONGS AND ARTISTS HERE:
-        // ==========================================
         const songs = [
             {
                 title: "Aarzu",
                 artist: "Noor, Khan, Madhurxo",
-                src: "song2.mpeg" 
+                src: "song2.mpeg"
             },
             {
                 title: "Lover",
                 artist: "Taylor Swift",
-                src: "song1.mpeg" 
+                src: "song1.mpeg"
             },
             {
                 title: "Aje Na Jaa",
                 artist: "Simran Chaudary",
-                src: "song3.mpeg" 
+                src: "song3.mpeg"
             }
         ];
-        // ==========================================
 
         const audio = document.getElementById('audio');
         const playBtn = document.getElementById('play');
@@ -167,10 +178,13 @@
         const title = document.getElementById('title');
         const artist = document.getElementById('artist');
         const playlistContainer = document.getElementById('playlist');
+        const progressContainer = document.getElementById('progress-container');
+        const progress = document.getElementById('progress');
+        const currentTimeEl = document.getElementById('current-time');
+        const durationEl = document.getElementById('duration');
 
         let songIndex = 0;
 
-        // Initially load song details into DOM
         loadSong(songs[songIndex]);
 
         function loadSong(song) {
@@ -215,6 +229,39 @@
             }
             loadSong(songs[songIndex]);
             playSong();
+        });
+
+        // Update progress bar & time
+        audio.addEventListener('timeupdate', (e) => {
+            const { duration, currentTime } = e.srcElement;
+            if (isNaN(duration)) return;
+            const progressPercent = (currentTime / duration) * 100;
+            progress.style.width = `${progressPercent}%`;
+
+            // Format current time
+            let currentMinutes = Math.floor(currentTime / 60);
+            let currentSeconds = Math.floor(currentTime % 60);
+            if (currentSeconds < 10) currentSeconds = `0${currentSeconds}`;
+            currentTimeEl.innerText = `${currentMinutes}:${currentSeconds}`;
+
+            // Format total duration
+            let durationMinutes = Math.floor(duration / 60);
+            let durationSeconds = Math.floor(duration % 60);
+            if (durationSeconds < 10) durationSeconds = `0${durationSeconds}`;
+            durationEl.innerText = `${durationMinutes}:${durationSeconds}`;
+        });
+
+        // Click on progress bar to skip
+        progressContainer.addEventListener('click', (e) => {
+            const width = progressContainer.clientWidth;
+            const clickX = e.offsetX;
+            const duration = audio.duration;
+            audio.currentTime = (clickX / width) * duration;
+        });
+
+        // Auto play next song when current ends
+        audio.addEventListener('ended', () => {
+            nextBtn.click();
         });
 
         function renderPlaylist() {
